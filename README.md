@@ -5,9 +5,8 @@ Retrieval-Augmented Generation*.
 
 The repository holds two things: the pipeline that builds **WashiMMKG**, a multimodal
 knowledge graph of Japanese handmade paper, and **WikiWalk**, the agentic retrieval method
-evaluated on it. The graph, the benchmark and the measured results are distributed
-separately (see *Data* below) because they are large and because the source material has
-its own terms of use.
+evaluated on it. The graph and the benchmark are distributed separately (see *Data*
+below) because they are large and because the source material has its own terms of use.
 
 ## Layout
 
@@ -72,8 +71,8 @@ cannot be separated afterwards.
 
 ## Data
 
-The graph, the benchmark, the images and the measured result files are in the data
-archive that accompanies the paper. Images that we cannot redistribute are listed in the
+The graph, the benchmark and the images are in the data archive that accompanies the
+paper. Images that we cannot redistribute are listed in the
 archive's manifest with a recovered source URL where one exists, and
 
 ```bash

@@ -71,8 +71,12 @@ cannot be separated afterwards.
 
 ## Data
 
-The graph, the benchmark and the images are available from the corresponding author on
-request, as a data archive. Images that we cannot redistribute are listed in the archive's
+The graph, the benchmark and the images are available from the corresponding author under
+a data use agreement: download
+[WashiMMKG_Data_Use_Agreement.docx](https://github.com/wbw520/WashiMMKG/raw/main/WashiMMKG_Data_Use_Agreement.docx),
+complete and sign it, and send it as a PDF from an institutional e-mail address to
+wang@im.sanken.osaka-u.ac.jp; a download link follows on countersignature. The data come
+as an archive. Images that we cannot redistribute are listed in the archive's
 manifest with their source, and a recovered file address where one exists; given the
 archive,
 

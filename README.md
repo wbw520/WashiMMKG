@@ -85,6 +85,11 @@ first collected. Text-only reproduction does not need them; the multimodal and
 multimodal-chain templates do. Point the code at them by setting the paths in
 `config.yaml`; `WASHI_RESULTS` selects which results directory the reporting tools read.
 
+## License
+
+The code is released under the Apache License 2.0; see `LICENSE`. The graph, the benchmark
+and the images are distributed separately with the data archive, under its own terms.
+
 ## Citation
 
 Please cite the paper. A BibTeX entry will be added here on publication.

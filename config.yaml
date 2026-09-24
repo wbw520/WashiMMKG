@@ -1,0 +1,158 @@
+# ============================================================================
+# WashiMMKG construction configuration
+# Pipeline: Extractor -> Filter -> Detector -> Creator  (see the paper, Methods)
+# Graph:    G = (E, R, T, A),  A(e) = {A_text(e), A_img(e)}
+# ============================================================================
+
+paths:
+  raw_dir: raw                 # drop input files here (.txt .md .pdf + images)
+  output_dir: output           # graph.json + manifest.json are written here
+  graph_file: graph.json
+  clean_graph_file: graph.v2.json  # tools/clean_graph.py output (graph.json is left intact)
+  manifest_file: manifest.json # tracks processed-file hashes for auto-expansion
+  images_dir: extracted_images # where images extracted from PDFs are saved (under output_dir)
+
+llm:
+  # provider: "anthropic"  -> uses the official Anthropic SDK (claude-opus-5)
+  # provider: "openai_compatible" -> Qwen3.5-VL / vLLM / DashScope (the paper's setup)
+  provider: anthropic
+
+  # --- anthropic ---
+  model: claude-opus-5
+  # API key read from ANTHROPIC_API_KEY
+
+  # --- openai_compatible (uncomment to use Qwen, matching the paper) ---
+  # provider: openai_compatible
+  # model: qwen3.5-vl-27b
+  # base_url: http://localhost:8000/v1   # vLLM, or https://dashscope... for DashScope
+  # api_key_env: OPENAI_API_KEY          # env var holding the key
+
+  max_tokens: 8000
+  temperature: 0.0             # not sent to claude-opus-5, which takes no sampling parameters
+  # Qwen3.5 reasons by default. The pipeline stages all want one short JSON object,
+  # where a chain of thought is pure latency (~8k tokens to name an entity). Turn on
+  # only for a task that genuinely needs deliberation.
+  enable_thinking: false
+
+embeddings:
+  model: sentence-transformers/all-MiniLM-L6-v2
+
+extractor:
+  # paragraph splitting
+  min_paragraph_chars: 120     # paragraphs shorter than this are merged with neighbours
+  max_paragraph_chars: 2000    # long paragraphs are chunked to this size
+
+filter:
+  # Semantic-similarity threshold delta. A triple is dropped if a distinct kept
+  # triple already exceeds this cosine similarity. Higher = keep more (less dedup).
+  delta: 0.92
+
+detector:
+  # Candidate canonical entities are pre-filtered by embedding similarity before the
+  # LLM judges equivalence (keeps the number of LLM calls bounded).
+  candidate_sim_threshold: 0.60
+  max_candidates: 8
+
+# ----------------------------------------------------------------------------
+# Graph cleaning (tools/clean_graph.py) — hygiene pass applied to G before the
+# QA benchmark is sampled from it. Reads graph_file, writes clean_graph_file.
+# ----------------------------------------------------------------------------
+cleaning:
+  # A "type node" is an ontology class that leaked into E as if it were an entity
+  # (`person`, `papermaker`, `museum`). It is detected structurally: it appears as
+  # an is_a tail at least `min_isa_in` times, essentially all of its in-edges are
+  # is_a, and it asserts almost nothing itself. Such a node is folded into the
+  # subject's `type` / `types` attribute and dropped from E, taking its vacuous
+  # is_a triples with it. Genuine taxonomic entities (`echizen washi`, `shifu`)
+  # survive because they carry real outgoing edges.
+  type_node:
+    min_isa_in: 2              # must classify at least this many entities
+    min_isa_in_ratio: 0.90     # share of in-edges that must be is_a
+    max_out_degree: 2          # a real entity asserts more than this
+    # Structure alone cannot tell `senkashi` (a real washi that happens to have
+    # is_a heads and no out-edges) from `person`. Attributes can: a node the corpus
+    # described carries A_text/A_img, a bare label carries nothing. Keep this on.
+    protect_attributed: true
+  # Entities at or above this degree are hubs (`washi`, `echizen washi`). They are
+  # kept, but flagged so the QA chain sampler refuses them as interior nodes —
+  # a path routed through `washi` carries no reasoning content.
+  hub_degree: 40
+  # Relation typology consumed by the chain sampler. Anything not listed is `core`
+  # and may appear anywhere in a chain.
+  #   taxonomic - class membership: acceptable as a chain terminal, vacuous inside
+  #   weak      - underspecified catch-all: same restriction
+  relation_class:
+    taxonomic: [is_a]
+    weak: [associated_with]
+
+# ----------------------------------------------------------------------------
+# Washi QA benchmark (bench/). Items are computed from the graph first and
+# verbalized second — see bench/templates.py for why.
+# ----------------------------------------------------------------------------
+benchmark:
+  seed: 20260817
+  target_total: 1850
+  # Share of items that must carry at least one image. Chains through the graph
+  # already touch imaged entities 56-70% of the time (imaged entities are the
+  # well-connected ones), so this is a floor to guarantee, not a filter that has to
+  # reject most samples. Items are NOT required to be multimodal individually.
+  mm_ratio: 0.40
+  # Per-type quotas. `aggregation` absorbs both whole-graph modes (set difference,
+  # and min/argmax extremum) — see bench/templates.py:t_aggregation for why they are
+  # one type rather than two.
+  # Sized to land near 1,700 kept items (100 dev + 1,600 test) after the leakage and
+  # jargon filters take their ~4%.
+  # temporal caps out around 140: the graph holds only that many dated entities that
+  # also carry other facts, so the shortfall is made up by the types that still have
+  # headroom rather than by loosening what counts as a temporal item.
+  quotas:
+    chain2: 260
+    chain3: 220
+    # chain5 asks for a five-step path on which every step has exactly one continuation.
+    # The graph holds about 1,078 such paths before de-duplication and the sampler tops
+    # out near 89 distinct items, so the shortfall moves to chain4 rather than being
+    # padded with near-duplicates.
+    # chain5 needs five consecutive steps that each have exactly one continuation and no
+    # confusable sibling relation. The graph yields 51 distinct ones and the sampler is
+    # allowed to report the shortfall rather than pad it; the deficit moves to chain4.
+    chain4: 171
+    chain5: 51
+    intersection: 370
+    comparative: 310
+    aggregation: 330
+    temporal: 180
+    # 500 visual items. `identify` is capped by the 349 distinct "what is this" questions
+    # the graph can pose -- one per imaged entity -- so the balance goes to the two modes
+    # that can vary the fact being asked about.
+    # Visual-terminal chains: the walk is over triples but the answer is only in the
+    # endpoint's photograph, so text-only evidence reaches the right entity and still
+    # cannot answer. This is the type that lets Know+ exceed Know.
+    mm_chain2: 120
+    mm_chain3: 100
+    multimodal_identify: 150
+    multimodal_attribute: 180
+    # multimodal_grounded is retired: the question named the entity its photograph was
+    # supposed to reveal, so mention resolution anchored the walk and the picture was
+    # decorative. Removing image roots cost that mode .039 against .545 for `attribute`.
+    multimodal_grounded: 0
+
+creator:
+  extract_doc_images: true     # pull embedded images out of PDFs in raw/ and save them
+  enable_image_alignment: true # align images (raw + extracted) to entities via a vision LLM
+  image_candidate_sim_threshold: 0.20
+  max_image_candidates: 15
+  max_text_attrs_per_entity: 8 # cap number of A_text(e) entries
+  # Cap on A_img(e). Held at 2 during the first build, which is why only 414 of the
+  # 1,121 extracted images reached the graph. Multimodal coverage is the binding
+  # constraint on the QA benchmark's visual subset, so the cap is raised: several
+  # views of one entity (fibre macro, workshop, finished sheet) are complementary
+  # evidence, not duplicates.
+  max_img_attrs_per_entity: 8
+  align_max_tokens: 300        # align(e) returns one short JSON object
+  max_text_attr_chars: 200     # cap each A_text entry length
+  # compress_mode: how A_text is shortened to fit max_text_attr_chars
+  #   "extractive" - pick the most relevant sentences, no LLM (default, free, offline)
+  #   "llm"        - abstractive: the LLM rewrites the evidence into one concise,
+  #                  entity-centric description per entity (needs an LLM backend)
+  compress_mode: extractive
+  image_exts: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"]

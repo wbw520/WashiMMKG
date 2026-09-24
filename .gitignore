@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+# data and measurements are distributed separately, never committed here
+output/
+raw/
+results/
+bench/*.json
+*.pdf
+*.png
+*.jpg

@@ -1,0 +1,19 @@
+# Core
+pyyaml>=6.0
+numpy>=1.24
+networkx>=3.0
+
+# Embeddings for the Filter (semantic dedup) and Detector (canonicalization)
+# Paper uses a Sentence-BERT-style model.
+sentence-transformers>=2.2
+
+# LLM backends (install at least one)
+anthropic>=0.40            # provider: anthropic   (default, claude-opus-5)
+openai>=1.40               # provider: openai_compatible (Qwen3.5-VL / vLLM / DashScope)
+
+# Document ingestion
+pypdf>=4.0                 # PDF text extraction
+Pillow>=10.0              # image handling for multimodal alignment
+
+# Optional: nicer PDF OCR fallback (commented; install if your PDFs are scans)
+# pytesseract>=0.3.10

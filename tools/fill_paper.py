@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
 import pathlib
 import re
@@ -27,7 +26,7 @@ import sys
 
 BASE = pathlib.Path(__file__).resolve().parents[1]
 R = BASE / os.environ.get("WASHI_RESULTS", "results")
-TEX = BASE.parent.parent / "paper" / "sn-article.tex"
+TEX = BASE.parent.parent / "Washi_NPJ_Heritage_Science" / "sn-article.tex"
 
 BACKBONES = [
     ("Qwen3.5-9B", "qwen9"),
@@ -86,17 +85,6 @@ def _test_split() -> set[str]:
 
 
 _SPLIT: set[str] | None = None
-
-
-def paired_z(full: str, other: str) -> float:
-    """z-score of the paired accuracy difference between two runs over the same items."""
-    a = {r["qid"]: bool(r["correct"]) for r in json.loads((R / f"{full}.json").read_text())["rows"]}
-    b = {r["qid"]: bool(r["correct"]) for r in json.loads((R / f"{other}.json").read_text())["rows"]}
-    n = len(a)
-    bc = sum(1 for q in a if a[q] and not b.get(q, False))    # full right, other wrong
-    cb = sum(1 for q in a if not a[q] and b.get(q, False))    # full wrong, other right
-    se = math.sqrt((bc + cb) - (bc - cb) ** 2 / n) / n
-    return ((cb - bc) / n) / se if se else 0.0
 
 
 def four(x: float) -> str:
@@ -209,12 +197,8 @@ def main() -> None:
             continue
         delta = None
         if tag != "abl-full" and base:
-            # The ablation answers the same items as the full run, so the difference is
-            # paired: its standard error comes from the discordant items alone. A dagger
-            # marks a difference the benchmark cannot distinguish from zero at 1.96 SE.
-            z = paired_z("abl-full.test", f"{tag}.test")
-            mark = "" if abs(z) >= 1.96 else "^{\\dagger}"
-            delta = f"${s['acc'] - base['acc']:+.4f}{mark}$".replace("0.", ".")
+            # the paper reports the difference alone; the paired z is in the supplement
+            delta = f"${s['acc'] - base['acc']:+.4f}$".replace("0.", ".")
         cells = [four(s["acc"]), four(s["precision"]), four(s["recall"]), delta]
         filled += 3
         err = set_row(lines, st, en, label, cells, "tab:wikiwalk_ablation")

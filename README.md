@@ -71,9 +71,10 @@ cannot be separated afterwards.
 
 ## Data
 
-The graph, the benchmark and the images are in the data archive that accompanies the
-paper. Images that we cannot redistribute are listed in the
-archive's manifest with a recovered source URL where one exists, and
+The graph, the benchmark and the images are available from the corresponding author on
+request, as a data archive. Images that we cannot redistribute are listed in the archive's
+manifest with their source, and a recovered file address where one exists; given the
+archive,
 
 ```bash
 python tools/place_images.py --data ../washi-data
@@ -88,7 +89,7 @@ multimodal-chain templates do. Point the code at them by setting the paths in
 ## License
 
 The code is released under the Apache License 2.0; see `LICENSE`. The graph, the benchmark
-and the images are distributed separately with the data archive, under its own terms.
+and the images are available separately on request, under their own terms.
 
 ## Citation
 

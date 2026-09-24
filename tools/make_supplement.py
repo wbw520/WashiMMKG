@@ -135,6 +135,12 @@ def sec_dev() -> str:
         return ""
     base = next(e for e in entries if (e[0], e[1], e[2]) == (3, 3, 8))
     n = len(base[6])
+    # The text below names the settings that clear |z| >= 1.96. Check it against the
+    # results instead of trusting it, so a re-measure cannot leave a stale sentence.
+    clear = {(b, d, k) for b, d, k, *_, cm in entries
+             if (b, d, k) != (3, 3, 8) and abs(paired_z(base[6], cm)) >= 1.96}
+    stated = {(b, d, k) for b, d, k, *_ in entries if b == 5 and k >= 12}
+    assert clear == stated, f"S1 text is out of date: |z| >= 1.96 for {sorted(clear)}"
     lines = [
         "\\section{Selection of the search configuration}\\label{sec:s1}",
         "",
@@ -142,10 +148,21 @@ def sec_dev() -> str:
         "chosen on the development split of %d items, before any of them was run on the" % n,
         "test split. Table~\\ref{tab:s_dev} gives every configuration tried. Accuracies on",
         "%d items carry a standard error near $0.05$, so the column to read is not the" % n,
-        "ranking but the paired comparison against the initial configuration: each variant",
-        "answers the same items, and $z$ is computed from the items whose outcome differs.",
-        "Every beam-5 setting is distinguishable from the initial one and no beam-3 setting",
-        "is, which is what the choice rests on.",
+        "ranking but the paired comparison against the initial configuration.",
+        "",
+        "\\textbf{Paired comparison.} Two configurations compared here always answer the",
+        "same items, so only the items on which their outcomes differ carry information about",
+        "the difference. With $b$ the number of items the variant answers correctly and the",
+        "configuration it is compared with does not, and $c$ the number for which the reverse",
+        "holds, we report $z = (b - c)/\\sqrt{b + c}$, the normal approximation to McNemar's",
+        "test; $|z| \\geq 1.96$ corresponds to a two-sided $p < 0.05$. The same statistic is",
+        "used in Section~\\ref{sec:s2}. These comparisons are exploratory: they are not",
+        "corrected for multiple testing, and each configuration was run once, so they do not",
+        "capture variation across repeated runs.",
+        "",
+        "Every beam-5 setting with $K$ of 12 or 16 is distinguishable from the initial",
+        "configuration; no beam-3 setting and no setting with $K = 8$ is, which is what the",
+        "choice rests on.",
         "",
         "\\begin{table}[h]",
         "\\centering",
@@ -181,7 +198,8 @@ def sec_ablations() -> str:
         "in the main paper only as points in a figure. All use Gemma-4-31B on the %d test" % len(fm),
         "items with the fixed judge, and differ from the reported configuration in one",
         "setting each. $\\Delta$ is the paired accuracy difference against the first row and",
-        "$z$ its paired statistic; $|z| < 1.96$ marks a difference this experiment cannot",
+        "$z$ its paired statistic as defined in Section~\\ref{sec:s1}; $|z| < 1.96$ marks a",
+        "difference this experiment cannot",
         "distinguish from zero.",
         "",
         "\\begin{table}[h]",

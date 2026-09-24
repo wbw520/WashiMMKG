@@ -1,10 +1,10 @@
 """Put the graph's 610 images where the code expects to find them.
 
 The images arrive in two ways and the graph does not care which: every entity refers to a
-picture as `output/extracted_images/<folder>/<file>`. The data archive ships the 257 we can
-redistribute -- 215 ours and our collaborators', 42 from Wikimedia Commons -- under
+picture as `output/extracted_images/<folder>/<file>`. The data archive ships the 255 we can
+redistribute -- 213 ours and our collaborators', 42 from Wikimedia Commons -- under
 `images/<rights group>/<folder>/<file>`, keeping the folder because 55 file names repeat
-across the seminar folders and a flat copy would collide. The other 353 belong to the sites
+across the seminar folders and a flat copy would collide. The other 355 belong to the sites
 they were collected from; those are downloaded from the address recorded in the manifest.
 
 One command does both:

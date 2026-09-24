@@ -1,8 +1,8 @@
 """Fetch the third-party images of WashiMMKG from the pages they came from.
 
-The data archive ships 257 of the graph's 610 images: 42 from Wikimedia Commons and 215
-produced by us or our collaborators. The other 353 belong to the sites and publications
-they were collected from, and we are not in a position to redistribute them. 290 of those
+The data archive ships 255 of the graph's 610 images: 42 from Wikimedia Commons and 213
+produced by us or our collaborators. The other 355 belong to the sites and publications
+they were collected from, and we are not in a position to redistribute them. 297 of those
 carry a recovered source URL in `image_manifest.csv`, and this script downloads them into
 the layout the graph expects.
 
